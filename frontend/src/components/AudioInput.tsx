@@ -25,8 +25,11 @@ export function AudioInput() {
   const [processingError, setProcessingError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showBrowserInfo, setShowBrowserInfo] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null); // <-- Added to store video file for playback
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null); // <-- Added video ref
   const intervalRef = useRef<NodeJS.Timeout>();
   const playbackProgressRef = useRef<HTMLDivElement>(null);
 
@@ -117,6 +120,7 @@ export function AudioInput() {
     setIsProcessingFile(true);
     setProcessingError("");
     setProcessingProgress("");
+    setVideoFile(null); // Reset video file on new upload
 
     try {
       let audioBlob: Blob;
@@ -135,6 +139,7 @@ export function AudioInput() {
           fileName = file.name.replace(/\.[^/.]+$/, "") + " (extracted audio)";
 
           setProcessingProgress("Audio extracted successfully!");
+          setVideoFile(file); // <-- Save video file for playback
         } catch (videoError) {
           console.error("Video conversion error:", videoError);
           throw new Error(
@@ -147,7 +152,6 @@ export function AudioInput() {
         setProcessingProgress("Processing audio file...");
         audioBlob = file;
         duration = await audioService.getAudioDuration(file);
-
         if (duration === 0) {
           throw new Error(
             "Could not determine audio duration. File may be corrupted."
@@ -367,6 +371,21 @@ export function AudioInput() {
           </div>
         </div>
 
+        {/* Video Playback Section */}
+        {videoFile && (
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200 mb-6">
+            <h3 className="font-semibold text-gray-900 mb-3">Video Playback</h3>
+            <video
+              ref={videoRef}
+              src={URL.createObjectURL(videoFile)}
+              controls
+              className="w-full rounded-md bg-black"
+              preload="metadata"
+            />
+          </div>
+        )}
+
+        {/* Current Recording Playback */}
         {state.currentRecording && (
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 border border-blue-100">
             <h3 className="font-semibold text-gray-900 mb-4">
